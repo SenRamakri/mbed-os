@@ -2075,3 +2075,13 @@ __WEAK void EvrRtxMessageQueueDestroyed (osMessageQueueId_t mq_id) {
 #endif
 }
 #endif
+
+#if (!defined(EVR_RTX_DISABLE))
+__WEAK void EvrRtxRegisterErrorHandlerCallback (uint32_t error_handler_callback_addr) {
+#if defined(RTE_Compiler_EventRecorder)
+  EventRecord2(EvrRtxRegisterErrorHandlerCallback, error_handler_callback_addr);
+#else
+  (void)error_handler_callback_addr;
+#endif
+}
+#endif

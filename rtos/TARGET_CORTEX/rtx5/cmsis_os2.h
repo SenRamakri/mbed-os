@@ -53,6 +53,7 @@
 #endif
  
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
  
 #ifdef  __cplusplus
@@ -218,7 +219,9 @@ typedef void *osMemoryPoolId_t;
  
 /// \details Message Queue ID identifies the message queue.
 typedef void *osMessageQueueId_t;
- 
+
+/// Error Handler Callback protoype
+typedef void  (*osErrorHandlerCallback_t)(void *osRtxFaultContext, void *osRtxInfo);  ///< OS Error callback
  
 #ifndef TZ_MODULEID_T
 #define TZ_MODULEID_T
@@ -739,8 +742,15 @@ osStatus_t osMessageQueueReset (osMessageQueueId_t mq_id);
 /// \param[in]     mq_id         message queue ID obtained by \ref osMessageQueueNew.
 /// \return status code that indicates the execution status of the function.
 osStatus_t osMessageQueueDelete (osMessageQueueId_t mq_id);
- 
- 
+
+
+//  ==== Erro Handling Related Functions ====
+/// Register Error Handler callback function.
+/// \param[in]     error_handler_callback         callback function pointer.
+/// \param[in]     arg                            an optional pointer which can be passed in and will be passed back into callback.
+/// \return bool indicating if the registration was successful.
+bool       osKernelRegisterErrorHandlerCallback(osErrorHandlerCallback_t error_handler_callback);
+
 #ifdef  __cplusplus
 }
 #endif

@@ -24,10 +24,10 @@
 ; */
 
 
-I_T_RUN_OFS     EQU      28                     ; osRtxInfo.thread.run offset
-TCB_SP_OFS      EQU      56                     ; TCB.SP offset
-TCB_SF_OFS      EQU      34                     ; TCB.stack_frame offset
-
+I_T_RUN_OFS             EQU      28                     ; osRtxInfo.thread.run offset
+I_T_CB_OFS              EQU      172                    ; osRtxInfo.error_handler_callback offset
+TCB_SP_OFS              EQU      56                     ; TCB.SP offset
+TCB_SF_OFS              EQU      34                     ; TCB.stack_frame offset
 
                 PRESERVE8
                 THUMB
@@ -39,6 +39,69 @@ irqRtxLib       DCB      0                      ; Non weak library reference
 
 
                 AREA     |.text|, CODE, READONLY
+
+HardFault_Handler\
+                PROC
+                EXPORT   HardFault_Handler
+                B        Fault_Handler
+                ENDP                
+
+MemManage_Handler\
+                PROC
+                EXPORT   MemManage_Handler
+                B        Fault_Handler
+                ENDP                
+                
+BusFault_Handler\
+                PROC
+                EXPORT   BusFault_Handler
+                B        Fault_Handler
+                ENDP
+
+UsageFault_Handler\
+                PROC
+                EXPORT   UsageFault_Handler
+                B        Fault_Handler 
+                ENDP
+                    
+Fault_Handler\
+                PROC
+                EXPORT   Fault_Handler
+                IMPORT   osRtxInfo
+                IMPORT   osRtxFaultContext    
+                
+                TST      LR, #0x4                 ; Check EXC_RETURN for bit 2
+                ITE      EQ
+                MRSEQ    R0,MSP
+                MRSNE    R0,PSP
+                
+                LDR      R1,=osRtxFaultContext     
+                LDR      R2,[R0]                   ; Capture R0
+                STR      R2,[R1],#4
+                LDR      R2,[R0,#4]                ; Capture R1
+                STR      R2,[R1],#4
+                LDR      R2,[R0,#8]                ; Capture R2
+                STR      R2,[R1],#4
+                LDR      R2,[R0,#12]               ; Capture R3
+                STR      R2,[R1],#4
+                STMIA    R1!,{R4-R11}              ; Capture R4..R11
+                LDR      R2,[R0,#16]               ; Capture R12
+                STR      R2,[R1],#4
+                STR      R0,[R1],#4                ; Capture SP
+                LDR      R2,[R0,#20]               ; Capture LR
+                STR      R2,[R1],#4
+                LDR      R2,[R0,#24]               ; Capture PC
+                STR      R2,[R1],#4
+                
+                LDR      R2,=osRtxInfo+I_T_CB_OFS ; Load address of osRtxInfo.error_handler_callback
+                LDR      R3,[R2]                  ; Load the address of error_handler_callback                
+                CMP      R3,#0
+                BNE      ErrorHandler_CB                            
+                B        .
+ErrorHandler_CB LDR      R0, =osRtxFaultContext
+                LDR      R1, =osRtxInfo
+                BLX      R3                
+                ENDP
 
 
 SVC_Handler     PROC

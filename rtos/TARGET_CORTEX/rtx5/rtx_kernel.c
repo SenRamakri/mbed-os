@@ -31,6 +31,8 @@
 osRtxInfo_t osRtxInfo __attribute__((section(".data.os"))) =
 { .os_id = osRtxKernelId, .version = osRtxVersionKernel, .kernel.state = osRtxKernelInactive };
 
+// OS Fault Context Info
+osRtxFaultContext_t osRtxFaultContext;
 
 //  ==== Helper functions ====
 
@@ -87,6 +89,7 @@ SVC0_0D(KernelGetTickCount,     uint64_t)
 SVC0_0 (KernelGetTickFreq,      uint32_t)
 SVC0_0 (KernelGetSysTimerCount, uint32_t)
 SVC0_0 (KernelGetSysTimerFreq,  uint32_t)
+SVC0_1M(KernelRegisterErrorHandlerCallback, bool, osErrorHandlerCallback_t)
 
 /// Initialize the RTOS Kernel.
 /// \note API identical to osKernelInitialize
@@ -365,6 +368,16 @@ int32_t svcRtxKernelRestoreLock (int32_t lock) {
   return osError;
 }
 
+/// Set the Error handler callback for OS Errors
+bool    svcRtxKernelRegisterErrorHandlerCallback(osErrorHandlerCallback_t error_handler_callback) {
+  if(error_handler_callback != NULL) {
+    osRtxInfo.error_handler_callback = error_handler_callback;
+    return true;
+  } 
+  
+  return false;
+}
+
 /// Suspend the RTOS Kernel scheduler.
 /// \note API identical to osKernelSuspend
 uint32_t svcRtxKernelSuspend (void) {
@@ -639,3 +652,13 @@ uint32_t osKernelGetSysTimerFreq (void) {
     return  __svcKernelGetSysTimerFreq();
   }
 }
+
+/// Register error handler callback
+bool       osKernelRegisterErrorHandlerCallback(osErrorHandlerCallback_t error_handler_callback) {
+  EvrRtxRegisterErrorHandlerCallback((uint32_t)error_handler_callback);
+  if (IS_IRQ_MODE() || IS_IRQ_MASKED()) {
+    return osErrorISR;
+  }
+  return __svcKernelRegisterErrorHandlerCallback(error_handler_callback);
+}
+

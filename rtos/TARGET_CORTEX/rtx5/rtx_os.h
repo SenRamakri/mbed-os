@@ -140,7 +140,7 @@ typedef struct osRtxThread_s {
  
 /// Timer Type definitions
 #define osRtxTimerPeriodic      ((uint8_t)osTimerPeriodic)
- 
+
 /// Timer Function Information
 typedef struct {
   void                            *fp;  ///< Function Pointer
@@ -341,11 +341,31 @@ typedef struct {
     osRtxMpInfo_t        *memory_pool;  ///< Memory Pool Control Blocks
     osRtxMpInfo_t      *message_queue;  ///< Message Queue Control Blocks
   } mpi;
-  uint32_t                    padding;
+  osErrorHandlerCallback_t error_handler_callback;  ///< OS Error callback
 } osRtxInfo_t;
  
 extern osRtxInfo_t osRtxInfo;           ///< OS Runtime Information
- 
+
+typedef struct {
+  uint32_t R0;
+  uint32_t R1;
+  uint32_t R2;
+  uint32_t R3;
+  uint32_t R4;
+  uint32_t R5;
+  uint32_t R6;
+  uint32_t R7;
+  uint32_t R8;
+  uint32_t R9;
+  uint32_t R10;
+  uint32_t R11;
+  uint32_t R12;
+  uint32_t SP;
+  uint32_t LR;
+  uint32_t PC;
+} osRtxFaultContext_t;
+
+extern osRtxFaultContext_t osRtxFaultContext;           ///< OS Fault Context Info
  
 //  ==== OS API definitions ====
  

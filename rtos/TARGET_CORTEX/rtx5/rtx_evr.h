@@ -1842,6 +1842,14 @@ extern void EvrRtxMessageQueueDestroyed (osMessageQueueId_t mq_id);
 #define EvrRtxMessageQueueDestroyed(mq_id)
 #endif
 
+/**
+  \brief  Register Error handler callback
+*/
+#if (!defined(EVR_RTX_DISABLE) && (OS_EVR_KERNEL != 0) && !defined(EVR_RTX_KERNEL_INITIALIZE_COMPLETED_DISABLE))
+extern void EvrRtxRegisterErrorHandlerCallback (uint32_t);
+#else
+#define EvrRtxRegisterErrorHandlerCallback(uint32_t)
+#endif
 
 #endif  // RTX_EVR_H_
 /** @}*/

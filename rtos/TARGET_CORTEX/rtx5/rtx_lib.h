@@ -1,3 +1,4 @@
+
 /** \addtogroup rtos */
 /** @{*/
 /*
@@ -211,6 +212,9 @@ extern uint32_t           svcRtxMessageQueueGetCount    (osMessageQueueId_t mq_i
 extern uint32_t           svcRtxMessageQueueGetSpace    (osMessageQueueId_t mq_id);
 extern osStatus_t         svcRtxMessageQueueReset       (osMessageQueueId_t mq_id);
 extern osStatus_t         svcRtxMessageQueueDelete      (osMessageQueueId_t mq_id);
+
+// Error Handler related calls
+extern bool               svcRtxRegisterErrorHandlerCallback(osErrorHandlerCallback_t error_handler_callback);
 
 #endif  // RTX_LIB_H_
 /** @}*/

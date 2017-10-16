@@ -168,6 +168,7 @@
 #include "cmsis_os2.h"
 #include "mbed_toolchain.h"
 #include "mbed_error.h"
+#include "mbed_fault_handler.h"
 #if defined(__IAR_SYSTEMS_ICC__ ) && (__VER__ >= 8000000)
 #include <DLib_Threads.h>
 #endif
@@ -325,6 +326,11 @@ void mbed_start_main(void)
         error("Pre main thread not created");
     }
 
+    //Register for OS error handling
+    if(false == osKernelRegisterErrorHandlerCallback( &mbedFaultHandler )) {
+        error("Unable to register Fault handler");      
+    }
+    
     osKernelStart();
 }
 
