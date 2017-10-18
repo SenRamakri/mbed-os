@@ -363,6 +363,16 @@ typedef struct {
   uint32_t SP;
   uint32_t LR;
   uint32_t PC;
+  uint32_t xPSR;
+  uint8_t MMFSR;
+  uint32_t MMFAR;
+  uint8_t BFSR;
+  uint32_t BFAR;
+  uint16_t UFSR;
+  uint32_t HFSR;
+  uint32_t DFSR;
+  uint32_t AFSR;
+  uint32_t SHCSR;
 } osRtxFaultContext_t;
 
 extern osRtxFaultContext_t osRtxFaultContext;           ///< OS Fault Context Info

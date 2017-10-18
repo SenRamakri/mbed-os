@@ -106,6 +106,9 @@ osStatus_t svcRtxKernelInitialize (void) {
 
   // Initialize osRtxInfo
   memset(&osRtxInfo.kernel, 0, sizeof(osRtxInfo) - offsetof(osRtxInfo_t, kernel));
+  
+  // Initialize osRtxFaultContext
+  memset(&osRtxFaultContext, 0, sizeof(osRtxFaultContext_t));
 
   if (osRtxConfig.thread_stack_size < (64U + 8U)) {
     EvrRtxKernelError(osRtxErrorInvalidThreadStack);

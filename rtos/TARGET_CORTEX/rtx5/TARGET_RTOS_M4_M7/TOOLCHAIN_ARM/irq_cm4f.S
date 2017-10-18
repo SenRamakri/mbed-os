@@ -28,6 +28,15 @@ I_T_RUN_OFS             EQU      28                     ; osRtxInfo.thread.run o
 I_T_CB_OFS              EQU      172                    ; osRtxInfo.error_handler_callback offset
 TCB_SP_OFS              EQU      56                     ; TCB.SP offset
 TCB_SF_OFS              EQU      34                     ; TCB.stack_frame offset
+SHCSR_ADDR              EQU      0xE000ED24
+MMFSR_ADDR              EQU      0xE000ED28 
+BFSR_ADDR               EQU      0xE000ED29
+UFSR_ADDR               EQU      0xE000ED2A
+HFSR_ADDR               EQU      0xE000ED2C
+DFSR_ADDR               EQU      0xE000ED30
+AFSR_ADDR               EQU      0xE000ED3C
+MMFAR_ADDR              EQU      0xE000ED34
+BFAR_ADDR               EQU      0xE000ED38
 
                 PRESERVE8
                 THUMB
@@ -70,27 +79,76 @@ Fault_Handler\
                 IMPORT   osRtxInfo
                 IMPORT   osRtxFaultContext    
                 
-                TST      LR, #0x4                 ; Check EXC_RETURN for bit 2
+                TST      LR,#0x4                  ; Check EXC_RETURN for bit 2
                 ITE      EQ
                 MRSEQ    R0,MSP
                 MRSNE    R0,PSP
                 
                 LDR      R1,=osRtxFaultContext     
-                LDR      R2,[R0]                   ; Capture R0
+                LDR      R2,[R0]                  ; Capture R0
                 STR      R2,[R1],#4
-                LDR      R2,[R0,#4]                ; Capture R1
+                LDR      R2,[R0,#4]               ; Capture R1
                 STR      R2,[R1],#4
-                LDR      R2,[R0,#8]                ; Capture R2
+                LDR      R2,[R0,#8]               ; Capture R2
                 STR      R2,[R1],#4
-                LDR      R2,[R0,#12]               ; Capture R3
+                LDR      R2,[R0,#12]              ; Capture R3
                 STR      R2,[R1],#4
-                STMIA    R1!,{R4-R11}              ; Capture R4..R11
-                LDR      R2,[R0,#16]               ; Capture R12
+                STMIA    R1!,{R4-R11}             ; Capture R4..R11
+                LDR      R2,[R0,#16]              ; Capture R12
                 STR      R2,[R1],#4
-                STR      R0,[R1],#4                ; Capture SP
-                LDR      R2,[R0,#20]               ; Capture LR
+                STR      R3,[R1],#4               ; Capture SP
+                LDR      R2,[R0,#20]              ; Capture LR
                 STR      R2,[R1],#4
-                LDR      R2,[R0,#24]               ; Capture PC
+                LDR      R2,[R0,#24]              ; Capture PC
+                STR      R2,[R1],#4
+                LDR      R2,[R0,#28]              ; Capture xPSR
+                STR      R2,[R1],#4
+                ; Adjust stack pointer to its original value and capture it
+                MOV      R3,R0
+                TST      LR,#0x10                 ; Check for if FP context was saved  
+                ITE      EQ
+                ADDEQ    R3,#0x68
+                ADDNE    R3,#0x20
+                TST      R2,#0x200                ; Check for if STK was aligned
+                ITE      EQ
+                ADDEQ    R2,#0x4
+                ADDNE    R2,#0x0
+                MOV      R4,R1
+                SUB      R4,#0x10                 ; Set the location of SP
+                STR      R3,[R4]                  ; Capture SP
+                LDR      R0,=MMFSR_ADDR           ; Capture MMFSR
+                LDRB     R2,[R0]
+                STRB     R2,[R1],#1
+                
+                TST      R2,#0x80
+                MOV      R2,#0
+                BEQ      Write_MMFAR
+                LDR      R0,=MMFAR_ADDR           ; Capture MMFAR
+                LDR      R2,[R0]
+Write_MMFAR     STR      R2,[R1],#4
+                LDR      R0,=BFSR_ADDR            ; Capture BFSR
+                LDRB     R2,[R0]
+                STRB     R2,[R1],#1
+                TST      R2,#0x80
+                MOV      R2,#0
+                BEQ      Write_BFAR
+                LDR      R0,=BFAR_ADDR            ; Capture BFAR
+                LDR      R2,[R0]
+Write_BFAR      STR      R2,[R1],#4
+                LDR      R0,=UFSR_ADDR            ; Capture UFSR
+                LDRH     R2,[R0]
+                STRH     R2,[R1],#2
+                LDR      R0,=HFSR_ADDR            ; Capture HFSR
+                LDR      R2,[R0]
+                STR      R2,[R1],#4
+                LDR      R0,=DFSR_ADDR            ; Capture DFSR
+                LDR      R2,[R0]
+                STR      R2,[R1],#4
+                LDR      R0,=AFSR_ADDR            ; Capture AFSR
+                LDR      R2,[R0]
+                STR      R2,[R1],#4
+                LDR      R0,=SHCSR_ADDR           ; Capture SHCSR
+                LDR      R2,[R0]
                 STR      R2,[R1],#4
                 
                 LDR      R2,=osRtxInfo+I_T_CB_OFS ; Load address of osRtxInfo.error_handler_callback
