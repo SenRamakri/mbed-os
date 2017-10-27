@@ -28,13 +28,13 @@ I_T_RUN_OFS             EQU      28                     ; osRtxInfo.thread.run o
 I_T_CB_OFS              EQU      172                    ; osRtxInfo.error_handler_callback offset
 TCB_SP_OFS              EQU      56                     ; TCB.SP offset
 TCB_SF_OFS              EQU      34                     ; TCB.stack_frame offset
-SHCSR_ADDR              EQU      0xE000ED24
-CFSR_ADDR               EQU      0xE000ED28 
-HFSR_ADDR               EQU      0xE000ED2C
-DFSR_ADDR               EQU      0xE000ED30
-AFSR_ADDR               EQU      0xE000ED3C
-MMFAR_ADDR              EQU      0xE000ED34
-BFAR_ADDR               EQU      0xE000ED38
+SHCSR_ADDR              EQU      0xE000ED24             ; Address of System Handler and Control Status Register 
+CFSR_ADDR               EQU      0xE000ED28             ; Address of Configurable Fault Status Register 
+HFSR_ADDR               EQU      0xE000ED2C             ; Address of Hard Fault Status Register
+DFSR_ADDR               EQU      0xE000ED30             ; Address of Debug Fault Status Register
+AFSR_ADDR               EQU      0xE000ED3C             ; Address of Auxiliary Fault Status Register
+MMFAR_ADDR              EQU      0xE000ED34             ; Address of MemManage Fault Address Register
+BFAR_ADDR               EQU      0xE000ED38             ; Address of Bus Fault Status Register
 
                 PRESERVE8
                 THUMB

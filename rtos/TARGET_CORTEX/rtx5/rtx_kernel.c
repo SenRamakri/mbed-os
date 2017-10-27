@@ -372,13 +372,11 @@ int32_t svcRtxKernelRestoreLock (int32_t lock) {
 }
 
 /// Set the Error handler callback for OS Errors
-bool    svcRtxKernelRegisterErrorHandlerCallback(osErrorHandlerCallback_t error_handler_callback) {
-  if(error_handler_callback != NULL) {
-    osRtxInfo.error_handler_callback = error_handler_callback;
-    return true;
-  } 
-  
-  return false;
+bool svcRtxKernelRegisterErrorHandlerCallback(osErrorHandlerCallback_t error_handler_callback) {
+  //Set the value even if its a NULL, as we may want to unregister the handler
+  osRtxInfo.error_handler_callback = error_handler_callback;
+    
+  return true;
 }
 
 /// Suspend the RTOS Kernel scheduler.

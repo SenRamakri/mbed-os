@@ -123,6 +123,7 @@ extern osStatus_t       svcRtxKernelStart            (void);
 extern int32_t          svcRtxKernelLock             (void);
 extern int32_t          svcRtxKernelUnlock           (void);
 extern int32_t          svcRtxKernelRestoreLock      (int32_t lock);
+extern bool             svcRtxKernelRegisterErrorHandlerCallback(osErrorHandlerCallback_t error_handler_callback);
 extern uint32_t         svcRtxKernelSuspend          (void);
 extern void             svcRtxKernelResume           (uint32_t sleep_ticks);
 extern uint64_t         svcRtxKernelGetTickCount     (void);
