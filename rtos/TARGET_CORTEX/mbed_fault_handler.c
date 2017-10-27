@@ -36,7 +36,7 @@ __NO_RETURN void mbedFaultHandler (void *mbedFaultContextIn, void *osRtxInfoIn)
     error_print("\nR4:0x%08X R5:0x%08X R6:0x%08X R7:0x%08X", mbedFaultContext->R4, mbedFaultContext->R5, mbedFaultContext->R6, mbedFaultContext->R7 );
     error_print("\nR8:0x%08X R9:0x%08X R10:0x%08X R11:0x%08X", mbedFaultContext->R8, mbedFaultContext->R9, mbedFaultContext->R10, mbedFaultContext->R11 );
     error_print("\nR12:0x%08X SP:0x%08X LR:0x%08X PC:0x%08X", mbedFaultContext->R12, mbedFaultContext->SP, mbedFaultContext->LR, mbedFaultContext->PC );
-    error_print("\nxPSR:0x%08X MMFSR:0x%02X BFSR:0x%02X UFSR:0x%04X ", mbedFaultContext->xPSR, mbedFaultContext->MMFSR, mbedFaultContext->BFSR, mbedFaultContext->UFSR );  
+    error_print("\nxPSR:0x%08X MMFSR:0x%02X BFSR:0x%02X UFSR:0x%04X ", mbedFaultContext->xPSR, 0xFF & (mbedFaultContext->CFSR), (0xFF & (mbedFaultContext->CFSR)) >> 8, (0xFFFF0000 & mbedFaultContext->CFSR) >> 16 );  
     error_print("\nHFSR:0x%08X DFSR:0x%08X AFSR:0x%08X MMFAR:0x%08X ", mbedFaultContext->HFSR, mbedFaultContext->DFSR, mbedFaultContext->AFSR, mbedFaultContext->MMFAR );  
     error_print("\nBFAR:0x%08X SHCSR:0x%08X ", mbedFaultContext->BFAR, mbedFaultContext->SHCSR );  
         

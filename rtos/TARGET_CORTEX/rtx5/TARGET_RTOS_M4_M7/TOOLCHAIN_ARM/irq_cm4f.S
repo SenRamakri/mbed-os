@@ -29,9 +29,7 @@ I_T_CB_OFS              EQU      172                    ; osRtxInfo.error_handle
 TCB_SP_OFS              EQU      56                     ; TCB.SP offset
 TCB_SF_OFS              EQU      34                     ; TCB.stack_frame offset
 SHCSR_ADDR              EQU      0xE000ED24
-MMFSR_ADDR              EQU      0xE000ED28 
-BFSR_ADDR               EQU      0xE000ED29
-UFSR_ADDR               EQU      0xE000ED2A
+CFSR_ADDR               EQU      0xE000ED28 
 HFSR_ADDR               EQU      0xE000ED2C
 DFSR_ADDR               EQU      0xE000ED30
 AFSR_ADDR               EQU      0xE000ED3C
@@ -115,29 +113,10 @@ Fault_Handler\
                 ADDNE    R2,#0x0
                 MOV      R4,R1
                 SUB      R4,#0x10                 ; Set the location of SP
-                STR      R3,[R4]                  ; Capture SP
-                LDR      R0,=MMFSR_ADDR           ; Capture MMFSR
-                LDRB     R2,[R0]
-                STRB     R2,[R1],#1
-                
-                TST      R2,#0x80
-                MOV      R2,#0
-                BEQ      Write_MMFAR
-                LDR      R0,=MMFAR_ADDR           ; Capture MMFAR
+                STR      R3,[R4]                  ; Capture the adjusted SP
+                LDR      R0,=CFSR_ADDR            ; Capture CFSR
                 LDR      R2,[R0]
-Write_MMFAR     STR      R2,[R1],#4
-                LDR      R0,=BFSR_ADDR            ; Capture BFSR
-                LDRB     R2,[R0]
-                STRB     R2,[R1],#1
-                TST      R2,#0x80
-                MOV      R2,#0
-                BEQ      Write_BFAR
-                LDR      R0,=BFAR_ADDR            ; Capture BFAR
-                LDR      R2,[R0]
-Write_BFAR      STR      R2,[R1],#4
-                LDR      R0,=UFSR_ADDR            ; Capture UFSR
-                LDRH     R2,[R0]
-                STRH     R2,[R1],#2
+                STR      R2,[R1],#4
                 LDR      R0,=HFSR_ADDR            ; Capture HFSR
                 LDR      R2,[R0]
                 STR      R2,[R1],#4
@@ -150,7 +129,12 @@ Write_BFAR      STR      R2,[R1],#4
                 LDR      R0,=SHCSR_ADDR           ; Capture SHCSR
                 LDR      R2,[R0]
                 STR      R2,[R1],#4
-                
+                LDR      R0,=MMFAR_ADDR           ; Capture MMFAR
+                LDR      R2,[R0]
+                STR      R2,[R1],#4
+                LDR      R0,=BFAR_ADDR            ; Capture BFAR
+                LDR      R2,[R0]
+                STR      R2,[R1],#4
                 LDR      R2,=osRtxInfo+I_T_CB_OFS ; Load address of osRtxInfo.error_handler_callback
                 LDR      R3,[R2]                  ; Load the address of error_handler_callback                
                 CMP      R3,#0

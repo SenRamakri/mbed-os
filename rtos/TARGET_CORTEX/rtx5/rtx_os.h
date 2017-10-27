@@ -346,6 +346,7 @@ typedef struct {
  
 extern osRtxInfo_t osRtxInfo;           ///< OS Runtime Information
 
+//WARNING: DO NOT CHANGE THIS STRUCT WITHOUT MAKING CORRESPONDING CHANGES irq_cmXX.S files.
 typedef struct {
   uint32_t R0;
   uint32_t R1;
@@ -364,15 +365,13 @@ typedef struct {
   uint32_t LR;
   uint32_t PC;
   uint32_t xPSR;
-  uint8_t MMFSR;
-  uint32_t MMFAR;
-  uint8_t BFSR;
-  uint32_t BFAR;
-  uint16_t UFSR;
+  uint32_t CFSR; //This is the combined register for UFSR, BFSR, MMFSR
   uint32_t HFSR;
   uint32_t DFSR;
   uint32_t AFSR;
   uint32_t SHCSR;
+  uint32_t MMFAR;
+  uint32_t BFAR;
 } osRtxFaultContext_t;
 
 extern osRtxFaultContext_t osRtxFaultContext;           ///< OS Fault Context Info
