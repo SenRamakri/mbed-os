@@ -131,7 +131,7 @@ static mbed_error_status_t handle_error(mbed_error_status_t error_status, unsign
    
 #endif //MBED_CONF_RTOS_PRESENT
 
-#ifdef MBED_CONF_ERROR_FILENAME_CAPTURE_ENABLED
+#ifdef MBED_CONF_PLATFORM_ERROR_FILENAME_CAPTURE_ENABLED
     //Capture filename/linenumber if provided
     //Index for tracking error_filename
     memset(&current_error_ctx.error_filename, 0, MBED_CONF_MAX_ERROR_FILENAME_LEN);
@@ -272,7 +272,7 @@ mbed_error_status_t mbed_clear_all_errors(void)
     memset(&last_error_ctx, sizeof(mbed_error_ctx), 0);
     //reset error count to 0
     error_count = 0;
-#ifndef MBED_CONF_ERROR_HIST_DISABLED    
+#ifdef MBED_CONF_PLATFORM_ERROR_HIST_ENABLED    
     status = mbed_error_hist_reset();
 #endif
     core_util_critical_section_exit();
@@ -280,7 +280,83 @@ mbed_error_status_t mbed_clear_all_errors(void)
     return status;
 }
 
-#ifndef MBED_CONF_ERROR_HIST_DISABLED
+static void print_error_report(mbed_error_ctx *ctx, const char *error_msg)
+{
+    uint32_t error_code = MBED_GET_ERROR_CODE(ctx->error_status);
+    uint32_t error_module = MBED_GET_ERROR_MODULE(ctx->error_status);
+    
+    mbed_error_printf("\n\n++ MbedOS Error Info ++\nError Status: 0x%X Code: %d Module: %d\nError Message: ", ctx->error_status, error_code, error_module);
+    
+    //Report error info based on error code, some errors require different 
+    //error_vals[1] contains the error code
+    if(error_code == MBED_ERROR_CODE_HARDFAULT_EXCEPTION || 
+       error_code == MBED_ERROR_CODE_MEMMANAGE_EXCEPTION || 
+       error_code == MBED_ERROR_CODE_BUSFAULT_EXCEPTION || 
+       error_code == MBED_ERROR_CODE_USAGEFAULT_EXCEPTION ) {
+        mbed_error_printf(error_msg);
+        mbed_error_printf("\nLocation: 0x%X\n", ctx->error_value);
+    } else {
+        switch (error_code) {
+            //These are errors reported by kernel handled from mbed_rtx_handlers
+            case MBED_ERROR_CODE_RTOS_EVENT:
+                mbed_error_printf("Kernel Error: 0x%X, ", ctx->error_value);
+                break;
+            
+            case MBED_ERROR_CODE_RTOS_THREAD_EVENT:
+                mbed_error_printf("Thread: 0x%X, ", ctx->error_value);
+                break;
+            
+            case MBED_ERROR_CODE_RTOS_MUTEX_EVENT:
+                mbed_error_printf("Mutex: 0x%X, ", ctx->error_value);
+                break;
+            
+            case MBED_ERROR_CODE_RTOS_SEMAPHORE_EVENT:
+                mbed_error_printf("Semaphore: 0x%X, ", ctx->error_value);
+                break;
+            
+            case MBED_ERROR_CODE_RTOS_MEMORY_POOL_EVENT:
+                mbed_error_printf("MemoryPool: 0x%X, ", ctx->error_value);
+                break;
+            
+            case MBED_ERROR_CODE_RTOS_EVENT_FLAGS_EVENT:
+                mbed_error_printf("EventFlags: 0x%X, ", ctx->error_value);
+                break;
+            
+            case MBED_ERROR_CODE_RTOS_TIMER_EVENT:
+                mbed_error_printf("Timer: 0x%X, ", ctx->error_value);
+                break;
+            
+            case MBED_ERROR_CODE_RTOS_MESSAGE_QUEUE_EVENT:    
+                mbed_error_printf("MessageQueue: 0x%X, ", ctx->error_value);
+                break;
+            
+            default:
+                //Nothing to do here, just print the error info down
+                break;
+        }
+        mbed_error_printf(error_msg);
+        mbed_error_printf("\nLocation: 0x%X", ctx->error_address);
+#if defined(MBED_CONF_PLATFORM_ERROR_FILENAME_CAPTURE_ENABLED) && !defined(NDEBUG)
+        if(NULL != ctx->error_filename) {
+            //for string, we must pass address of a ptr which has the address of the string 
+            mbed_error_printf("\nFile:%s+%d", ctx->error_filename, ctx->error_line_number);
+        }
+#endif 
+
+#ifdef TARGET_CORTEX_M        
+        mbed_error_printf("\nError Value: 0x%X\nCurrent Thread: Id: 0x%X Entry: 0x%X StackSize: 0x%X StackMem: 0x%X SP: 0x%X ", 
+                            ctx->error_value, ctx->thread_id, ctx->thread_entry_address, ctx->thread_stack_size, ctx->thread_stack_mem, ctx->thread_current_sp);
+#else
+        //For Cortex-A targets we dont have support to capture the current SP
+        mbed_error_printf("\nError Value: 0x%X\nCurrent Thread: Id: 0x%X Entry: 0x%X StackSize: 0x%X StackMem: 0x%X ", 
+                            ctx->error_value, ctx->thread_id, ctx->thread_entry_address, ctx->thread_stack_size, ctx->thread_stack_mem);
+#endif //TARGET_CORTEX_M
+    }
+    
+    mbed_error_printf("-- MbedOS Error Info --\n");
+}
+
+#ifdef MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
 //Retrieve the error context from error log at the specified index
 mbed_error_status_t mbed_get_error_hist_info (int index, mbed_error_ctx *error_info) 
 {
@@ -351,83 +427,5 @@ exit:
         
     return ret;
 }
-
-static void print_error_report(mbed_error_ctx *ctx, const char *error_msg)
-{
-    uint32_t error_code = MBED_GET_ERROR_CODE(ctx->error_status);
-    uint32_t error_module = MBED_GET_ERROR_MODULE(ctx->error_status);
-    
-    mbed_error_printf("\n\n++ MbedOS Error Info ++\nError Status: 0x%x Code: %d Module: %d\nError Message: ", ctx->error_status, error_code, error_module);
-    
-    //Report error info based on error code, some errors require different 
-    //error_vals[1] contains the error code
-    if(error_code == MBED_ERROR_CODE_HARDFAULT_EXCEPTION || 
-       error_code == MBED_ERROR_CODE_MEMMANAGE_EXCEPTION || 
-       error_code == MBED_ERROR_CODE_BUSFAULT_EXCEPTION || 
-       error_code == MBED_ERROR_CODE_USAGEFAULT_EXCEPTION ) {
-        mbed_error_printf(error_msg);
-        mbed_error_printf("\nLocation: 0x%x\n", ctx->error_value);
-    } else {
-        switch (error_code) {
-            //These are errors reported by kernel handled from mbed_rtx_handlers
-            case MBED_ERROR_CODE_RTOS_EVENT:
-                mbed_error_printf("Kernel Error: 0x%x, ", ctx->error_value);
-                break;
-            
-            case MBED_ERROR_CODE_RTOS_THREAD_EVENT:
-                mbed_error_printf("Thread: 0x%x, ", ctx->error_value);
-                break;
-            
-            case MBED_ERROR_CODE_RTOS_MUTEX_EVENT:
-                mbed_error_printf("Mutex: 0x%x, ", ctx->error_value);
-                break;
-            
-            case MBED_ERROR_CODE_RTOS_SEMAPHORE_EVENT:
-                mbed_error_printf("Semaphore: 0x%x, ", ctx->error_value);
-                break;
-            
-            case MBED_ERROR_CODE_RTOS_MEMORY_POOL_EVENT:
-                mbed_error_printf("MemoryPool: 0x%x, ", ctx->error_value);
-                break;
-            
-            case MBED_ERROR_CODE_RTOS_EVENT_FLAGS_EVENT:
-                mbed_error_printf("EventFlags: 0x%x, ", ctx->error_value);
-                break;
-            
-            case MBED_ERROR_CODE_RTOS_TIMER_EVENT:
-                mbed_error_printf("Timer: 0x%x, ", ctx->error_value);
-                break;
-            
-            case MBED_ERROR_CODE_RTOS_MESSAGE_QUEUE_EVENT:    
-                mbed_error_printf("MessageQueue: 0x%x, ", ctx->error_value);
-                break;
-            
-            default:
-                //Nothing to do here, just print the error info down
-                break;
-        }
-        mbed_error_printf(error_msg, NULL);
-        mbed_error_printf("\nLocation: 0x%x", ctx->error_address);
-#if defined(MBED_CONF_ERROR_FILENAME_CAPTURE_ENABLED) && !defined(NDEBUG)
-        if(NULL != ctx->error_filename) {
-            //for string, we must pass address of a ptr which has the address of the string 
-            mbed_error_printf("\nFile:%s+%d", ctx->error_filename, ctx->error_line_number);
-        }
-#endif 
-
-#ifdef TARGET_CORTEX_M        
-        mbed_error_printf("\nError Value: 0x%x\nCurrent Thread: Id: 0x%x Entry: 0x%x StackSize: 0x%x StackMem: 0x%x SP: 0x%x ", 
-                            ctx->error_value, ctx->thread_id, ctx->thread_entry_address, ctx->thread_stack_size, ctx->thread_stack_mem, ctx->thread_current_sp);
-#else
-        //For Cortex-A targets we dont have support to capture the current SP
-        mbed_error_printf("\nError Value: 0x%x\nCurrent Thread: Id: 0x%x Entry: 0x%x StackSize: 0x%x StackMem: 0x%x ", 
-                            ctx->error_value, ctx->thread_id, ctx->thread_entry_address, ctx->thread_stack_size, ctx->thread_stack_mem);
-#endif //TARGET_CORTEX_M
-    }
-    
-    mbed_error_printf("\n-- MbedOS Error Info --\n");
-}
-
-
 #endif
 
