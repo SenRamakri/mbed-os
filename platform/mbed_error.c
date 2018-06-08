@@ -147,7 +147,7 @@ static mbed_error_status_t handle_error(mbed_error_status_t error_status, unsign
     //copy this error to last error
     memcpy(&last_error_ctx, &current_error_ctx, sizeof(mbed_error_ctx));
     
-#ifndef MBED_CONF_ERROR_HIST_DISABLED    
+#ifdef MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
     //Log the error with error log
     mbed_error_hist_put(&current_error_ctx);
 #endif    
@@ -353,7 +353,7 @@ static void print_error_report(mbed_error_ctx *ctx, const char *error_msg)
 #endif //TARGET_CORTEX_M
     }
     
-    mbed_error_printf("-- MbedOS Error Info --\n");
+    mbed_error_printf("\n-- MbedOS Error Info --\n");
 }
 
 #ifdef MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
